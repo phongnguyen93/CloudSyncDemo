@@ -1,8 +1,12 @@
 package com.phongnguyen.cloudsyncdemo;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
+import android.support.v4.util.ArrayMap;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -12,16 +16,63 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.dropbox.core.DbxWebAuth;
 import com.dropbox.core.v2.users.FullAccount;
 import com.phongnguyen.cloudsyncdemo.dropbox.DropboxClientFactory;
+import com.phongnguyen.cloudsyncdemo.dropbox.UriHelpers;
 import com.phongnguyen.cloudsyncdemo.dropbox.task.GetCurrentAccountTask;
+import com.phongnguyen.cloudsyncdemo.upload_task.interfaces.ApiInterface;
+import com.phongnguyen.cloudsyncdemo.upload_task.models.ApiResponse;
+import com.phongnguyen.cloudsyncdemo.upload_task.models.MetaData;
+import com.phongnguyen.cloudsyncdemo.upload_task.models.Session;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class MainActivity extends DropboxActivity
         implements NavigationView.OnNavigationItemSelectedListener
         , CloudFilesFragment.OnFragmentInteractionListener
         ,MyFilesFragment.OnFragmentInteractionListener {
 
+    private static final int PICKFILE_REQUEST_CODE = 1;
+    public static final int DEFAULT_TOTAL_CHUNK = 1;
+    public static final String DEFAULT_DEST = "/";
+
+    public static final String  DEFAULT_TOKEN = "5075284997574d7f84dd8334a7c1d284";
+
+    // upload post method params
+    public static final String CONTENT_TYPE = "form-data";
+    public static final String UPLOAD_PARAM_ID = "upload_id";
+    public static final String UPLOAD_PARAM_FILE = "file";
+    public static final String UPLOAD_PARAM_NAME = "name";
+    public static final String UPLOAD_PARAM_DEST = "dest";
+    public static final String UPLOAD_PARAM_TOTAL_SIZE = "reported_total_size";
+    public static final String UPLOAD_PARAM_OFFSET = "offset";
+    public static final String UPLOAD_PARAM_CHUNK = "chunk";
+    public static final String UPLOAD_PARAM_TOTAL_CHUNK = "chunks";
+
     private boolean hasToken;
+    private Session mCurrentSession;
+    private MetaData mMetaData;
+
+    @Inject
+    SharedPreferences mSharedPreferences;
+
+    @Inject
+    Retrofit mRetrofit;
+
+    @Inject
+    ApiInterface mApiInterface;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +80,7 @@ public class MainActivity extends DropboxActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        ((MyApplication) getApplication()).getMainComponent().inject(this);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
             this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -41,6 +92,102 @@ public class MainActivity extends DropboxActivity
 
         getSupportFragmentManager().beginTransaction().add(R.id.content,MyFilesFragment.newInstance()).commit();
     }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICKFILE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                try {
+                    Log.d("data", data.getData().toString());
+                    // This is the result of a call to launchFilePicker
+                    File file = UriHelpers.getFileForUri(this, data.getData());
+                    if (file != null)
+                        requestSession(file.getName(), DEFAULT_DEST, file.length(), DEFAULT_TOTAL_CHUNK);
+                    if (mCurrentSession != null)
+                        uploadFile(createParamsMap(mCurrentSession, getFileMetaData(file),file));
+                }catch (Exception ex)
+                {
+                    Log.e("error",ex.getMessage());
+                }
+            }
+        }
+    }
+
+
+    private MetaData getFileMetaData(File file){
+        mMetaData = new MetaData();
+        mMetaData.setName(file.getName());
+        mMetaData.setDest(DEFAULT_DEST); //default destination on server: /
+        mMetaData.setOffset(0); //default offset
+        mMetaData.setChunk(0); //current chunk ( default = 0 if file size < 8Mb
+        mMetaData.setTotalSize(file.length());
+        mMetaData.setTotalChunk(DEFAULT_TOTAL_CHUNK); //default total chunk = 1 if file size < 8Mb
+        return  mMetaData;
+    }
+
+    private void uploadFile(Map<String,RequestBody> params) {
+        Call<ApiResponse> upload = mApiInterface.uploadFile(DEFAULT_TOKEN,params);
+        upload.enqueue(new Callback<ApiResponse>() {
+            @Override
+            public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getApplicationContext(),response.body().getMessage()+" - Uploaded",Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.i("ERROR", String.valueOf(response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse> call, Throwable t) {
+
+            }
+        });
+
+
+    }
+
+    private Map<String, RequestBody> createParamsMap(Session session, MetaData metaData, File file) {
+        Map<String, RequestBody> params = new ArrayMap<>();
+        params.put(UPLOAD_PARAM_ID,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,session.getSessionId()));
+        params.put(UPLOAD_PARAM_NAME,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,metaData.getName()));
+        params.put(UPLOAD_PARAM_DEST,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,metaData.getDest()));
+        params.put(UPLOAD_PARAM_TOTAL_SIZE,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,String.valueOf(metaData.getTotalSize())));
+        params.put(UPLOAD_PARAM_OFFSET,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,String.valueOf(metaData.getOffset())));
+        params.put(UPLOAD_PARAM_CHUNK,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,String.valueOf(metaData.getChunk())));
+        params.put(UPLOAD_PARAM_TOTAL_CHUNK,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,String.valueOf(metaData.getTotalChunk())));
+        params.put(UPLOAD_PARAM_FILE,RequestBody.create(MediaType.parse(CONTENT_TYPE),file));
+        return params;
+    }
+
+    private void requestSession(String fileName,String fileDest,long fileSize,int totalChunk) {
+        Call<Session> request = mApiInterface.requestUploadSession(DEFAULT_TOKEN,fileName,fileDest,fileSize,totalChunk);
+        request.enqueue(new Callback<Session>() {
+            @Override
+            public void onResponse(Call<Session> call, Response<Session> response) {
+                if (response.isSuccessful()) {
+                    mCurrentSession = response.body();
+                } else {
+                    Log.i("ERROR", String.valueOf(response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Session> call, Throwable t) {
+
+            }
+        });
+    }
+
 
     @Override
     public void onBackPressed() {
@@ -92,6 +239,15 @@ public class MainActivity extends DropboxActivity
         return true;
     }
 
+
+    private void launchFilePicker() {
+        // Launch intent to pick file for upload
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        startActivityForResult(intent, 1);
+    }
+
     @Override
     public void onFragmentInteraction(Uri uri) {
 
@@ -117,5 +273,10 @@ public class MainActivity extends DropboxActivity
                 Log.e(getClass().getName(), "Failed to get account details.", e);
             }
         }).execute();
+    }
+
+    @Override
+    public void onFragmentInteraction() {
+        launchFilePicker();
     }
 }
