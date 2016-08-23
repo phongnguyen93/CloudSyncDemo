@@ -18,6 +18,8 @@ import android.widget.Toast;
 
 import com.dropbox.core.DbxWebAuth;
 import com.dropbox.core.v2.users.FullAccount;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.phongnguyen.cloudsyncdemo.dropbox.DropboxClientFactory;
 import com.phongnguyen.cloudsyncdemo.dropbox.UriHelpers;
 import com.phongnguyen.cloudsyncdemo.dropbox.task.GetCurrentAccountTask;
@@ -28,11 +30,13 @@ import com.phongnguyen.cloudsyncdemo.upload_task.models.Session;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
 
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -51,7 +55,7 @@ public class MainActivity extends DropboxActivity
     public static final String  DEFAULT_TOKEN = "5075284997574d7f84dd8334a7c1d284";
 
     // upload post method params
-    public static final String CONTENT_TYPE = "form-data";
+    public static final String CONTENT_TYPE = "multipart/form-data";
     public static final String UPLOAD_PARAM_ID = "upload_id";
     public static final String UPLOAD_PARAM_FILE = "file";
     public static final String UPLOAD_PARAM_NAME = "name";
@@ -101,13 +105,11 @@ public class MainActivity extends DropboxActivity
         if (requestCode == PICKFILE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 try {
-                    Log.d("data", data.getData().toString());
-                    // This is the result of a call to launchFilePicker
                     File file = UriHelpers.getFileForUri(this, data.getData());
                     if (file != null)
                         requestSession(file.getName(), DEFAULT_DEST, file.length(), DEFAULT_TOTAL_CHUNK);
                     if (mCurrentSession != null)
-                        uploadFile(createParamsMap(mCurrentSession, getFileMetaData(file),file));
+                        uploadFile(createParamsMap(mCurrentSession, getFileMetaData(file)),file);
                 }catch (Exception ex)
                 {
                     Log.e("error",ex.getMessage());
@@ -128,16 +130,25 @@ public class MainActivity extends DropboxActivity
         return  mMetaData;
     }
 
-    private void uploadFile(Map<String,RequestBody> params) {
-        Call<ApiResponse> upload = mApiInterface.uploadFile(DEFAULT_TOKEN,params);
+    private void uploadFile(Map<String,RequestBody> params,File file) {
+        MultipartBody.Part body = MultipartBody.Part.createFormData(UPLOAD_PARAM_FILE,file.getName()
+                ,RequestBody.create(MediaType.parse(CONTENT_TYPE),file));
+        Call<ApiResponse> upload = mApiInterface.uploadFile(DEFAULT_TOKEN,params,body);
         upload.enqueue(new Callback<ApiResponse>() {
             @Override
             public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(getApplicationContext(),response.body().getMessage()+" - Uploaded",Toast.LENGTH_SHORT).show();
-                } else {
-                    Log.i("ERROR", String.valueOf(response.code()));
-                }
+                } else
+                    if (response.code() == 400) {
+                        try {
+                            Log.v("Error code 400",response.errorBody().string());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+
             }
 
             @Override
@@ -149,8 +160,8 @@ public class MainActivity extends DropboxActivity
 
     }
 
-    private Map<String, RequestBody> createParamsMap(Session session, MetaData metaData, File file) {
-        Map<String, RequestBody> params = new ArrayMap<>();
+    private Map<String, RequestBody> createParamsMap(Session session, MetaData metaData) {
+        Map<String, RequestBody> params = new HashMap<>();
         params.put(UPLOAD_PARAM_ID,RequestBody.create(MediaType.parse(CONTENT_TYPE)
                 ,session.getSessionId()));
         params.put(UPLOAD_PARAM_NAME,RequestBody.create(MediaType.parse(CONTENT_TYPE)
@@ -165,7 +176,6 @@ public class MainActivity extends DropboxActivity
                 ,String.valueOf(metaData.getChunk())));
         params.put(UPLOAD_PARAM_TOTAL_CHUNK,RequestBody.create(MediaType.parse(CONTENT_TYPE)
                 ,String.valueOf(metaData.getTotalChunk())));
-        params.put(UPLOAD_PARAM_FILE,RequestBody.create(MediaType.parse(CONTENT_TYPE),file));
         return params;
     }
 

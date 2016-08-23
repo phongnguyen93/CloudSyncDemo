@@ -7,6 +7,7 @@ import com.phongnguyen.cloudsyncdemo.upload_task.models.Session;
 
 import java.util.Map;
 
+import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.FormUrlEncoded;
@@ -39,7 +40,6 @@ public interface ApiInterface {
      */
     @POST("/chunked_upload/")
     @Multipart
-    @Headers({ "Content-Type: multipart/form-data;charset=UTF-8"})
     Call<ApiResponse> uploadFile(@Header("Authorization") String authorization
-            ,@PartMap Map<String, RequestBody> params);
+            , @PartMap Map<String, RequestBody> params, @Part MultipartBody.Part file);
 }

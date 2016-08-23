@@ -5,7 +5,7 @@ package com.phongnguyen.cloudsyncdemo.upload_task.models;
  */
 public class ApiResponse {
     private int error;
-    private String message;
+    private String status;
     private String data;
 
     public int getError() {
@@ -17,11 +17,11 @@ public class ApiResponse {
     }
 
     public String getMessage() {
-        return message;
+        return status;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setMessage(String status) {
+        this.status = status;
     }
 
     public String getData() {

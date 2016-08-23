@@ -56,7 +56,6 @@ public class NetModule {
     okhttp3.OkHttpClient provideOkHttpClient() {
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        // Init & create okhttp builder
         okhttp3.OkHttpClient.Builder httpClient = new okhttp3.OkHttpClient.Builder();
         httpClient.addInterceptor(logging);
         return httpClient.build();
