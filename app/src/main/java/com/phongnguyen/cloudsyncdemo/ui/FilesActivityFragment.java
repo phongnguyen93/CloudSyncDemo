@@ -1,10 +1,12 @@
-package com.phongnguyen.cloudsyncdemo;
+package com.phongnguyen.cloudsyncdemo.ui;
 
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.phongnguyen.cloudsyncdemo.R;
 
 /**
  * A placeholder fragment containing a simple view.

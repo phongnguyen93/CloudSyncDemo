@@ -1,4 +1,4 @@
-package com.phongnguyen.cloudsyncdemo;
+package com.phongnguyen.cloudsyncdemo.ui;
 
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
