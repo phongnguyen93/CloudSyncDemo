@@ -1,4 +1,4 @@
-package com.phongnguyen.cloudsyncdemo.upload_task.di.modules;
+package com.phongnguyen.cloudsyncdemo.api.di.modules;
 
 import android.app.Application;
 

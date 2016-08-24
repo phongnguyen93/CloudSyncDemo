@@ -1,8 +1,8 @@
-package com.phongnguyen.cloudsyncdemo.upload_task.di.modules;
+package com.phongnguyen.cloudsyncdemo.api.di.modules;
 
 
-import com.phongnguyen.cloudsyncdemo.upload_task.di.scopes.UserScope;
-import com.phongnguyen.cloudsyncdemo.upload_task.interfaces.ApiInterface;
+import com.phongnguyen.cloudsyncdemo.api.di.scopes.UserScope;
+import com.phongnguyen.cloudsyncdemo.api.interfaces.ApiInterface;
 
 import dagger.Module;
 import dagger.Provides;

@@ -1,4 +1,4 @@
-package com.phongnguyen.cloudsyncdemo;
+package com.phongnguyen.cloudsyncdemo.ui;
 
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -27,6 +27,7 @@ import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveId;
 import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
+import com.phongnguyen.cloudsyncdemo.R;
 import com.phongnguyen.cloudsyncdemo.dropbox.FilesAdapter;
 import com.phongnguyen.cloudsyncdemo.dropbox.PicassoClient;
 import com.phongnguyen.cloudsyncdemo.dropbox.task.GGDriveFilesAdapter;

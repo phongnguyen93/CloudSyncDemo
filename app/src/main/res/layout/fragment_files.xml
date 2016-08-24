@@ -6,7 +6,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.phongnguyen.cloudsyncdemo.FilesActivityFragment"
+    tools:context=".ui.FilesActivityFragment"
     tools:showIn="@layout/activity_files">
 
     <!-- TODO: Update blank fragment layout -->

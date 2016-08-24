@@ -1,4 +1,4 @@
-package com.phongnguyen.cloudsyncdemo.upload_task.di.modules;
+package com.phongnguyen.cloudsyncdemo.api.di.modules;
 
 import android.app.Application;
 import android.content.SharedPreferences;
@@ -7,19 +7,12 @@ import android.preference.PreferenceManager;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.squareup.okhttp.Cache;
-import com.squareup.okhttp.OkHttpClient;
 
-
-import java.io.IOException;
 
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import okhttp3.Interceptor;
-import okhttp3.Request;
-import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;

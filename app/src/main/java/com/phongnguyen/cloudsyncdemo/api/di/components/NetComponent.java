@@ -1,12 +1,11 @@
-package com.phongnguyen.cloudsyncdemo.upload_task.di.components;
+package com.phongnguyen.cloudsyncdemo.api.di.components;
 
 
 import android.content.SharedPreferences;
 
 
-import com.phongnguyen.cloudsyncdemo.upload_task.di.modules.AppModule;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.modules.NetModule;
-import com.squareup.okhttp.OkHttpClient;
+import com.phongnguyen.cloudsyncdemo.api.di.modules.AppModule;
+import com.phongnguyen.cloudsyncdemo.api.di.modules.NetModule;
 
 import javax.inject.Singleton;
 

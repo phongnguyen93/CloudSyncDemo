@@ -1,4 +1,4 @@
-package com.phongnguyen.cloudsyncdemo.upload_task.models;
+package com.phongnguyen.cloudsyncdemo.models;
 
 /**
  * Created by phongnguyen on 8/23/16.

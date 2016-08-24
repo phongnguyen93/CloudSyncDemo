@@ -1,4 +1,4 @@
-package com.phongnguyen.cloudsyncdemo;
+package com.phongnguyen.cloudsyncdemo.ui;
 
 import android.Manifest;
 import android.app.ProgressDialog;
@@ -25,6 +25,7 @@ import android.widget.Toast;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.files.FolderMetadata;
 import com.dropbox.core.v2.files.ListFolderResult;
+import com.phongnguyen.cloudsyncdemo.R;
 import com.phongnguyen.cloudsyncdemo.dropbox.DropboxClientFactory;
 import com.phongnguyen.cloudsyncdemo.dropbox.FilesAdapter;
 import com.phongnguyen.cloudsyncdemo.dropbox.task.DownloadFileTask;

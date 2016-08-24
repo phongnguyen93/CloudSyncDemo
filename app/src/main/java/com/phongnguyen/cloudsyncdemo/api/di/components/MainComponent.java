@@ -1,10 +1,10 @@
-package com.phongnguyen.cloudsyncdemo.upload_task.di.components;
+package com.phongnguyen.cloudsyncdemo.api.di.components;
 
 
 
 import com.phongnguyen.cloudsyncdemo.MainActivity;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.modules.ApiModule;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.scopes.UserScope;
+import com.phongnguyen.cloudsyncdemo.api.di.modules.ApiModule;
+import com.phongnguyen.cloudsyncdemo.api.di.scopes.UserScope;
 
 import dagger.Component;
 

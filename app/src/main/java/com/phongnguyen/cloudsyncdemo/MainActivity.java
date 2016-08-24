@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.util.ArrayMap;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,17 +14,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.dropbox.core.DbxWebAuth;
 import com.dropbox.core.v2.users.FullAccount;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.phongnguyen.cloudsyncdemo.dropbox.DropboxClientFactory;
 import com.phongnguyen.cloudsyncdemo.dropbox.UriHelpers;
 import com.phongnguyen.cloudsyncdemo.dropbox.task.GetCurrentAccountTask;
-import com.phongnguyen.cloudsyncdemo.upload_task.interfaces.ApiInterface;
-import com.phongnguyen.cloudsyncdemo.upload_task.models.ApiResponse;
-import com.phongnguyen.cloudsyncdemo.upload_task.models.MetaData;
-import com.phongnguyen.cloudsyncdemo.upload_task.models.Session;
+import com.phongnguyen.cloudsyncdemo.ui.CloudFilesFragment;
+import com.phongnguyen.cloudsyncdemo.ui.DropboxActivity;
+import com.phongnguyen.cloudsyncdemo.ui.MyFilesFragment;
+import com.phongnguyen.cloudsyncdemo.api.interfaces.ApiInterface;
+import com.phongnguyen.cloudsyncdemo.models.ApiResponse;
+import com.phongnguyen.cloudsyncdemo.models.MetaData;
+import com.phongnguyen.cloudsyncdemo.models.Session;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +92,7 @@ public class MainActivity extends DropboxActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        getSupportFragmentManager().beginTransaction().add(R.id.content,MyFilesFragment.newInstance()).commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.content, MyFilesFragment.newInstance()).commit();
     }
 
 

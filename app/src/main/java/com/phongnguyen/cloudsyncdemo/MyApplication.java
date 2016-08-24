@@ -2,13 +2,13 @@ package com.phongnguyen.cloudsyncdemo;
 
 import android.app.Application;
 
-import com.phongnguyen.cloudsyncdemo.upload_task.di.components.DaggerMainComponent;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.components.DaggerNetComponent;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.components.MainComponent;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.components.NetComponent;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.modules.ApiModule;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.modules.AppModule;
-import com.phongnguyen.cloudsyncdemo.upload_task.di.modules.NetModule;
+import com.phongnguyen.cloudsyncdemo.api.di.components.DaggerMainComponent;
+import com.phongnguyen.cloudsyncdemo.api.di.components.DaggerNetComponent;
+import com.phongnguyen.cloudsyncdemo.api.di.components.MainComponent;
+import com.phongnguyen.cloudsyncdemo.api.di.components.NetComponent;
+import com.phongnguyen.cloudsyncdemo.api.di.modules.ApiModule;
+import com.phongnguyen.cloudsyncdemo.api.di.modules.AppModule;
+import com.phongnguyen.cloudsyncdemo.api.di.modules.NetModule;
 
 /**
  * Created by phongnguyen on 8/23/16.

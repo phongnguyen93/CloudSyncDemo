@@ -39,7 +39,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".FilesActivity"
+            android:name=".ui.FilesActivity"
             android:label="@string/title_activity_files"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
@@ -56,7 +56,7 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name=".GGDriveActivity"
+            android:name=".ui.GGDriveActivity"
             android:label="@string/title_activity_ggdrive"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">

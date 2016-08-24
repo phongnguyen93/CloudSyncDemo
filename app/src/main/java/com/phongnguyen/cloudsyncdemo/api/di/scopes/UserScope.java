@@ -1,4 +1,4 @@
-package com.phongnguyen.cloudsyncdemo.upload_task.di.scopes;
+package com.phongnguyen.cloudsyncdemo.api.di.scopes;
 
 import javax.inject.Scope;
 
