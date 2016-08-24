@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 
 import com.phongnguyen.cloudsyncdemo.api.di.modules.AppModule;
 import com.phongnguyen.cloudsyncdemo.api.di.modules.NetModule;
+import com.squareup.picasso.Picasso;
 
 import javax.inject.Singleton;
 

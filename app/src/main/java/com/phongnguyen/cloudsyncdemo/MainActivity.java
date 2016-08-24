@@ -15,19 +15,24 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.dropbox.core.v2.users.FullAccount;
+import com.phongnguyen.cloudsyncdemo.api.interfaces.ApiInterface;
 import com.phongnguyen.cloudsyncdemo.dropbox.DropboxClientFactory;
 import com.phongnguyen.cloudsyncdemo.dropbox.UriHelpers;
 import com.phongnguyen.cloudsyncdemo.dropbox.task.GetCurrentAccountTask;
+import com.phongnguyen.cloudsyncdemo.models.ApiResponse;
+import com.phongnguyen.cloudsyncdemo.models.MetaData;
+import com.phongnguyen.cloudsyncdemo.models.MyFile;
+import com.phongnguyen.cloudsyncdemo.models.MyFolder;
+import com.phongnguyen.cloudsyncdemo.models.Session;
 import com.phongnguyen.cloudsyncdemo.ui.CloudFilesFragment;
 import com.phongnguyen.cloudsyncdemo.ui.DropboxActivity;
 import com.phongnguyen.cloudsyncdemo.ui.MyFilesFragment;
-import com.phongnguyen.cloudsyncdemo.api.interfaces.ApiInterface;
-import com.phongnguyen.cloudsyncdemo.models.ApiResponse;
-import com.phongnguyen.cloudsyncdemo.models.MetaData;
-import com.phongnguyen.cloudsyncdemo.models.Session;
+import com.phongnguyen.cloudsyncdemo.util.CommonUtils;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,6 +71,13 @@ public class MainActivity extends DropboxActivity
     private boolean hasToken;
     private Session mCurrentSession;
     private MetaData mMetaData;
+    private MyFolder myFolder;
+    private CallFragment callFragment;
+
+
+    public interface CallFragment{
+        void refreshData(ArrayList<MyFile> files);
+    }
 
     @Inject
     SharedPreferences mSharedPreferences;
@@ -75,6 +87,8 @@ public class MainActivity extends DropboxActivity
 
     @Inject
     ApiInterface mApiInterface;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,8 +105,9 @@ public class MainActivity extends DropboxActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        getFolder(DEFAULT_DEST);
 
-        getSupportFragmentManager().beginTransaction().add(R.id.content, MyFilesFragment.newInstance()).commit();
+
     }
 
 
@@ -113,6 +128,7 @@ public class MainActivity extends DropboxActivity
                     Log.e("error",ex.getMessage());
                 }
             }
+
         }
     }
 
@@ -128,6 +144,29 @@ public class MainActivity extends DropboxActivity
         return  mMetaData;
     }
 
+    private void getFolder(String folderPath){
+        final String name = CommonUtils.getFolderNameFromPath(folderPath);
+        Call<MyFolder> browse = mApiInterface.browse(DEFAULT_TOKEN,folderPath);
+        browse.enqueue(new Callback<MyFolder>() {
+            @Override
+            public void onResponse(Call<MyFolder> call, Response<MyFolder> response) {
+                if (response.isSuccessful()) {
+                    myFolder = response.body();
+                    Log.d("file_count_get",myFolder.getTotalFiles()+"");
+                    Log.d("file_count_actual",myFolder.getFileList().size()+"");
+                    myFolder.setName(name);
+                    getSupportFragmentManager().beginTransaction().add(R.id.content, MyFilesFragment.newInstance(myFolder)).commit();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MyFolder> call, Throwable t) {
+
+            }
+        });
+
+    }
+
     private void uploadFile(Map<String,RequestBody> params,File file) {
         MultipartBody.Part body = MultipartBody.Part.createFormData(UPLOAD_PARAM_FILE,file.getName()
                 ,RequestBody.create(MediaType.parse(CONTENT_TYPE),file));
@@ -137,6 +176,7 @@ public class MainActivity extends DropboxActivity
             public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(getApplicationContext(),response.body().getMessage()+" - Uploaded",Toast.LENGTH_SHORT).show();
+
                 } else
                     if (response.code() == 400) {
                         try {
@@ -236,7 +276,7 @@ public class MainActivity extends DropboxActivity
         int id = item.getItemId();
 
         if(id== R.id.nav_my_files){
-            getSupportFragmentManager().beginTransaction().replace(R.id.content,MyFilesFragment.newInstance()).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.content,MyFilesFragment.newInstance(myFolder)).commit();
         }
         else if( id == R.id.nav_cloud_files){
             getSupportFragmentManager().beginTransaction().replace(R.id.content,CloudFilesFragment.newInstance(hasToken)).commit();
@@ -286,5 +326,10 @@ public class MainActivity extends DropboxActivity
     @Override
     public void onFragmentInteraction() {
         launchFilePicker();
+    }
+
+    @Override
+    public void onFileInteraction() {
+
     }
 }
