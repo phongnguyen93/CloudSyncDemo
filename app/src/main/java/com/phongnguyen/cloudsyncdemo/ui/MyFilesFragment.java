@@ -4,11 +4,24 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import com.dropbox.core.v1.DbxEntry;
+import com.phongnguyen.cloudsyncdemo.MainActivity;
 import com.phongnguyen.cloudsyncdemo.R;
+import com.phongnguyen.cloudsyncdemo.dropbox.PicassoClient;
+import com.phongnguyen.cloudsyncdemo.models.MyFile;
+import com.phongnguyen.cloudsyncdemo.models.MyFolder;
+import com.phongnguyen.cloudsyncdemo.ui.adapter.FileDisplayAdapter;
+import com.phongnguyen.cloudsyncdemo.util.CommonUtils;
+
+import java.util.ArrayList;
 
 
 /**
@@ -19,19 +32,24 @@ import com.phongnguyen.cloudsyncdemo.R;
  * Use the {@link MyFilesFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MyFilesFragment extends Fragment {
+public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Callback{
 
 
     private OnFragmentInteractionListener mListener;
-
+    private MyFolder myFolder;
+    private FileDisplayAdapter adapter;
+    private TextView tvSummary;
     public MyFilesFragment() {
         // Required empty public constructor
     }
 
 
     // TODO: Rename and change types and number of parameters
-    public static MyFilesFragment newInstance() {
+    public static MyFilesFragment newInstance(MyFolder myFolder) {
         MyFilesFragment fragment = new MyFilesFragment();
+        Bundle b = new Bundle();
+        b.putParcelable("folder",myFolder);
+        fragment.setArguments(b);
         return fragment;
     }
 
@@ -39,6 +57,7 @@ public class MyFilesFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
     }
 
     @Override
@@ -53,9 +72,23 @@ public class MyFilesFragment extends Fragment {
                 mListener.onFragmentInteraction();
             }
         });
+        RecyclerView recyclerView = (RecyclerView)v.findViewById(R.id.rvFileDisplay);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
+        adapter = new FileDisplayAdapter(PicassoClient.getPicasso(),this);
+        tvSummary =(TextView)v.findViewById(R.id.tvSummary);
+
+        recyclerView.setLayoutManager(linearLayoutManager);
+        myFolder = getArguments().getParcelable("folder");
+        tvSummary.setText(CommonUtils.makeFolderSummaryText(myFolder));
+        if(myFolder != null)
+        {
+            adapter.setFiles(myFolder.getFileList());
+            recyclerView.setAdapter(adapter);
+
+        }
+
         return  v;
     }
-
 
 
 
@@ -77,6 +110,12 @@ public class MyFilesFragment extends Fragment {
         mListener = null;
     }
 
+    @Override
+    public void onFolderClicked() {
+        mListener.onFileInteraction();
+    }
+
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -90,5 +129,6 @@ public class MyFilesFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction();
+        void onFileInteraction();
     }
 }

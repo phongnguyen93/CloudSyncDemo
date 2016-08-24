@@ -21,6 +21,14 @@ public class PicassoClient {
                 .build();
     }
 
+    public static void initBasic(Context context) {
+
+        // Configure picasso to know about special thumbnail requests
+        sPicasso = new Picasso.Builder(context)
+                .downloader(new OkHttpDownloader(context))
+                .build();
+    }
+
 
     public static Picasso getPicasso() {
         return sPicasso;

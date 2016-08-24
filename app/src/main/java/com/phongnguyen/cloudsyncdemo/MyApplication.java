@@ -9,6 +9,8 @@ import com.phongnguyen.cloudsyncdemo.api.di.components.NetComponent;
 import com.phongnguyen.cloudsyncdemo.api.di.modules.ApiModule;
 import com.phongnguyen.cloudsyncdemo.api.di.modules.AppModule;
 import com.phongnguyen.cloudsyncdemo.api.di.modules.NetModule;
+import com.phongnguyen.cloudsyncdemo.dropbox.PicassoClient;
+import com.squareup.picasso.Picasso;
 
 /**
  * Created by phongnguyen on 8/23/16.
@@ -23,7 +25,7 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        PicassoClient.initBasic(getApplicationContext());
         mNetComponent = DaggerNetComponent.builder()
                 .appModule(new AppModule(this))
                 .netModule(new NetModule(BASE_URL))
@@ -33,6 +35,7 @@ public class MyApplication extends Application {
                 .netComponent(mNetComponent)
                 .apiModule(new ApiModule())
                 .build();
+
     }
     public NetComponent getNetComponent() {
         return mNetComponent;
@@ -41,4 +44,5 @@ public class MyApplication extends Application {
     public MainComponent getMainComponent() {
         return mMainComponent;
     }
+
 }
