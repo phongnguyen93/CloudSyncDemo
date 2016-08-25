@@ -21,6 +21,7 @@
 package com.phongnguyen.cloudsyncdemo.ui.dialog;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -46,6 +47,11 @@ public class CreateFolderDialogFragment
     private static final String ARG_PARENT_FOLDER = "PARENT_FOLDER";
     
     public static final String CREATE_FOLDER_FRAGMENT = "CREATE_FOLDER_FRAGMENT";
+    private DialogCallback mCallback;
+
+    public interface DialogCallback{
+        void createFolderCallback(String folderPath, String folderName);
+    }
 
     /**
      * Public factory method to create new CreateFolderDialogFragment instances.
@@ -62,6 +68,17 @@ public class CreateFolderDialogFragment
         
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof DialogCallback) {
+            mCallback = (DialogCallback) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
     private MyFolder mParentFolder;
     
     
@@ -74,8 +91,7 @@ public class CreateFolderDialogFragment
         View v = inflater.inflate(R.layout.edit_box_dialog, null);
         
         // Setup layout 
-        EditText inputText = ((EditText)v.findViewById(R.id.user_input));
-        inputText.setText("");
+        EditText inputText = ((EditText)v.findViewById(R.id.folder_path));
         inputText.requestFocus();
         
         // Build the dialog  
@@ -93,10 +109,11 @@ public class CreateFolderDialogFragment
     @Override
     public void onClick(DialogInterface dialog, int which) {
         if (which == AlertDialog.BUTTON_POSITIVE) {
-            String newFolderName =
-                    ((TextView) (getDialog().findViewById(R.id.user_input)))
+            String folderPath = ((TextView) (getDialog().findViewById(R.id.folder_path)))
                             .getText().toString().trim();
-
+            String folderName = ((TextView) (getDialog().findViewById(R.id.folder_name)))
+                    .getText().toString().trim();
+            mCallback.createFolderCallback(folderPath,folderName);
 
         }
     }

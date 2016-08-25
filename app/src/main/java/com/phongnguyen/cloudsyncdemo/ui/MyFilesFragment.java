@@ -31,6 +31,8 @@ import com.phongnguyen.cloudsyncdemo.util.CommonUtils;
 public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Callback{
 
 
+    private static final String FAB_ACTION_CREATE_FOLDER = "createFolder";
+    private static final String FAB_ACTION_UPLOAD = "uploadFile";
     private OnFragmentInteractionListener mListener;
     private MyFolder myFolder;
     private FileDisplayAdapter adapter;
@@ -93,7 +95,7 @@ public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Call
         mFabUploadFromApp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onFragmentInteraction();
+                mListener.onFragmentInteraction(FAB_ACTION_CREATE_FOLDER);
                 mFabMain.collapse();
             }
         });
@@ -108,6 +110,7 @@ public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Call
         mFabMkdir.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mListener.onFragmentInteraction(FAB_ACTION_CREATE_FOLDER);
                 mFabMain.collapse();
             }
         });
@@ -150,7 +153,7 @@ public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Call
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction();
+        void onFragmentInteraction(String fabAction);
         void onFileInteraction();
     }
 }
