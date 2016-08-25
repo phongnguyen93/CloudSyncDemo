@@ -20,4 +20,7 @@
     <string name="common_ok">@android:string/ok</string>
     <string name="common_cancel">@android:string/cancel</string>
     <string name="uploader_info_dirname">Create new folder</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

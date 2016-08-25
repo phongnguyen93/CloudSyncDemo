@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -42,6 +43,8 @@ import com.phongnguyen.cloudsyncdemo.ui.CloudFilesFragment;
 import com.phongnguyen.cloudsyncdemo.ui.ContactListFragment;
 import com.phongnguyen.cloudsyncdemo.ui.DropboxActivity;
 import com.phongnguyen.cloudsyncdemo.ui.MyFilesFragment;
+import com.phongnguyen.cloudsyncdemo.ui.dialog.CreateFolderDialogFragment;
+import com.phongnguyen.cloudsyncdemo.ui.dialog.LoadingDialog;
 import com.phongnguyen.cloudsyncdemo.util.CommonUtils;
 import com.squareup.picasso.Picasso;
 
@@ -65,7 +68,8 @@ import retrofit2.Retrofit;
 public class MainActivity extends DropboxActivity
         implements NavigationView.OnNavigationItemSelectedListener
         , CloudFilesFragment.OnFragmentInteractionListener
-        ,MyFilesFragment.OnFragmentInteractionListener ,AlertDialog.OnClickListener,ContactListFragment.OnFragmentInteractionListener{
+        ,MyFilesFragment.OnFragmentInteractionListener ,AlertDialog.OnClickListener,
+        ContactListFragment.OnFragmentInteractionListener,CreateFolderDialogFragment.DialogCallback{
 
     private static final int PICKFILE_REQUEST_CODE = 1;
     public static final int DEFAULT_TOTAL_CHUNK = 1;
@@ -82,8 +86,20 @@ public class MainActivity extends DropboxActivity
     public static final String UPLOAD_PARAM_OFFSET = "offset";
     public static final String UPLOAD_PARAM_CHUNK = "chunk";
     public static final String UPLOAD_PARAM_TOTAL_CHUNK = "chunks";
+
+    //request read contact constant
     private static final int REQUEST_PERMISSIONS = 20;
     public static final String[] requestedPermissions = {Manifest.permission.READ_CONTACTS};
+
+    //folder action constant
+    public static final String ACTION_NEW = "new";
+    public static final String ACTION_RENAME = "rename";
+    public static final String ACTION_MOVE = "move";
+    public static final String ACTION_DELETE = "delete";
+
+    //folder action params
+    public static final String PARAM_FOLDER_PATH = "file_path";
+    public static final String PARAM_FOLDER_NAME = "folder_name";
 
     private boolean hasToken;
     private boolean hasCheckedPermission =false;
@@ -94,11 +110,6 @@ public class MainActivity extends DropboxActivity
     private SparseIntArray mErrorString;
 
 
-
-
-    public interface CallFragment{
-        void refreshData(ArrayList<MyFile> files);
-    }
 
     @Inject
     SharedPreferences mSharedPreferences;
@@ -358,8 +369,20 @@ public class MainActivity extends DropboxActivity
     }
 
     @Override
-    public void onFragmentInteraction() {
-        launchFilePicker();
+    public void onFragmentInteraction(String fabAction) {
+        switch (fabAction){
+            case "createFolder":
+                showCreateFolderDialog();
+                break;
+            case "uploadFile":
+                launchFilePicker();
+                break;
+        }
+
+    }
+
+    private void showCreateFolderDialog() {
+        CreateFolderDialogFragment.newInstance(myFolder).show(getSupportFragmentManager(),CreateFolderDialogFragment.class.getSimpleName());
     }
 
     @Override
@@ -449,6 +472,59 @@ public class MainActivity extends DropboxActivity
         if(id == R.id.btnGrantPermission){
             changePermissionSetting();
         }
+    }
+
+    @Override
+    public void createFolderCallback(String folderPath, String folderName) {
+        showProgressDialog("Processing...");
+        folderAction(ACTION_NEW,createParamMapFolderAction(folderPath,folderName));
+    }
+
+    private void folderAction(String action,Map<String,RequestBody> params){
+        Call<MyFile> folderAction = mApiInterface.folderAction(DEFAULT_TOKEN,action,params);
+        folderAction.enqueue(new Callback<MyFile>() {
+            @Override
+            public void onResponse(Call<MyFile> call, Response<MyFile> response) {
+                if(response.isSuccessful()){
+                    dismissLoadingDialog();
+                    if(response.body().getId()!=""){
+                        refreshData();
+                    }else
+                        Log.e("folder_action:",response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MyFile> call, Throwable t) {
+
+            }
+        });
+    }
+
+    private void refreshData() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.content, MyFilesFragment.newInstance(myFolder)).commitAllowingStateLoss();
+        getFolder(DEFAULT_DEST);
+    }
+
+    private void showProgressDialog(String displayText){
+        LoadingDialog.newInstance(displayText).show(getSupportFragmentManager(),LoadingDialog.class.getSimpleName());
+    }
+
+    public void dismissLoadingDialog() {
+        Fragment frag = getSupportFragmentManager().findFragmentByTag(LoadingDialog.class.getSimpleName());
+        if (frag != null) {
+            LoadingDialog loading = (LoadingDialog) frag;
+            loading.dismiss();
+        }
+    }
+
+    private Map<String,RequestBody> createParamMapFolderAction(String folderPath, String folderName){
+        Map<String, RequestBody> params = new HashMap<>();
+        params.put(PARAM_FOLDER_PATH,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,folderPath));
+        params.put(PARAM_FOLDER_NAME,RequestBody.create(MediaType.parse(CONTENT_TYPE)
+                ,folderName));
+        return params;
     }
 }
 

@@ -24,10 +24,19 @@
     android:orientation="vertical" >
 
     <EditText
-        android:id="@+id/user_input"
+        android:id="@+id/folder_path"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Folder path"
+        android:ems="10"
+        android:inputType="textNoSuggestions|textCapSentences"/>
+    <EditText
+        android:id="@+id/folder_name"
+        android:layout_width="match_parent"
+        android:hint="Folder name"
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="textNoSuggestions|textCapSentences"/>
+
 
 </LinearLayout>
