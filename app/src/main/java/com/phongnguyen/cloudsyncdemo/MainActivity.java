@@ -1,17 +1,31 @@
 package com.phongnguyen.cloudsyncdemo;
 
+import android.Manifest;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.SparseIntArray;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dropbox.core.v2.users.FullAccount;
@@ -25,6 +39,7 @@ import com.phongnguyen.cloudsyncdemo.models.MyFile;
 import com.phongnguyen.cloudsyncdemo.models.MyFolder;
 import com.phongnguyen.cloudsyncdemo.models.Session;
 import com.phongnguyen.cloudsyncdemo.ui.CloudFilesFragment;
+import com.phongnguyen.cloudsyncdemo.ui.ContactListFragment;
 import com.phongnguyen.cloudsyncdemo.ui.DropboxActivity;
 import com.phongnguyen.cloudsyncdemo.ui.MyFilesFragment;
 import com.phongnguyen.cloudsyncdemo.util.CommonUtils;
@@ -32,6 +47,7 @@ import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,12 +65,11 @@ import retrofit2.Retrofit;
 public class MainActivity extends DropboxActivity
         implements NavigationView.OnNavigationItemSelectedListener
         , CloudFilesFragment.OnFragmentInteractionListener
-        ,MyFilesFragment.OnFragmentInteractionListener {
+        ,MyFilesFragment.OnFragmentInteractionListener ,AlertDialog.OnClickListener,ContactListFragment.OnFragmentInteractionListener{
 
     private static final int PICKFILE_REQUEST_CODE = 1;
     public static final int DEFAULT_TOTAL_CHUNK = 1;
     public static final String DEFAULT_DEST = "/";
-
     public static final String  DEFAULT_TOKEN = "5075284997574d7f84dd8334a7c1d284";
 
     // upload post method params
@@ -67,12 +82,18 @@ public class MainActivity extends DropboxActivity
     public static final String UPLOAD_PARAM_OFFSET = "offset";
     public static final String UPLOAD_PARAM_CHUNK = "chunk";
     public static final String UPLOAD_PARAM_TOTAL_CHUNK = "chunks";
+    private static final int REQUEST_PERMISSIONS = 20;
+    public static final String[] requestedPermissions = {Manifest.permission.READ_CONTACTS};
 
     private boolean hasToken;
+    private boolean hasCheckedPermission =false;
+
     private Session mCurrentSession;
     private MetaData mMetaData;
     private MyFolder myFolder;
-    private CallFragment callFragment;
+    private SparseIntArray mErrorString;
+
+
 
 
     public interface CallFragment{
@@ -96,6 +117,7 @@ public class MainActivity extends DropboxActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        mErrorString = new SparseIntArray();
         ((MyApplication) getApplication()).getMainComponent().inject(this);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -279,14 +301,24 @@ public class MainActivity extends DropboxActivity
         if(id== R.id.nav_my_files){
             getSupportFragmentManager().beginTransaction().replace(R.id.content,MyFilesFragment.newInstance(myFolder)).commit();
         }
-        else if( id == R.id.nav_cloud_files){
-            getSupportFragmentManager().beginTransaction().replace(R.id.content,CloudFilesFragment.newInstance(hasToken)).commit();
-        }
+        else if( id == R.id.nav_cloud_files) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.content, CloudFilesFragment.newInstance(hasToken)).commit();
+        }else {
+            if (hasCheckedPermission) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED)
+                    onPermissionsGranted(true);
+                else
+                    onPermissionsGranted(false);
+            } else
+                requestAppPermissions(requestedPermissions, R.string.runtime_permissions_txt, REQUEST_PERMISSIONS);
 
+
+        }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
 
 
     private void launchFilePicker() {
@@ -333,4 +365,89 @@ public class MainActivity extends DropboxActivity
     public void onFileInteraction() {
 
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        int permissionCheck = PackageManager.PERMISSION_GRANTED;
+        for (int permission : grantResults) {
+            permissionCheck = permissionCheck + permission;
+        }
+        if ((grantResults.length > 0) && permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            onPermissionsGranted(true);
+        } else
+            onPermissionsGranted(false);
+    }
+
+    //Launch Setting Intent to change permission manually
+    private void changePermissionSetting(){
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setData(Uri.parse("package:" + getPackageName()));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+        startActivity(intent);
+    }
+
+    //Check permission and make request dialog if permission is not granted
+    private void requestAppPermissions(final String[] requestedPermissions,
+                                      final int stringId, final int requestCode) {
+        mErrorString.put(requestCode, stringId);
+        int permissionCheck = PackageManager.PERMISSION_GRANTED;
+        boolean shouldShowRequestPermissionRationale = false;
+        for (String permission : requestedPermissions) {
+            permissionCheck = permissionCheck + ContextCompat.checkSelfPermission(this, permission);
+            shouldShowRequestPermissionRationale = shouldShowRequestPermissionRationale
+                    || ActivityCompat.shouldShowRequestPermissionRationale(this, permission);
+        }
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            if (shouldShowRequestPermissionRationale) {
+                showRequestDiaglog();
+            } else {
+                onPermissionsGranted(false);
+            }
+        } else {
+            onPermissionsGranted(true);
+        }
+        hasCheckedPermission = true;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        //No call for super(). Bug on API Level > 11.
+    }
+
+    //BUild and show dialog to explain why this app need permission
+    private void showRequestDiaglog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setPositiveButton(R.string.common_ok, this)
+                .setNegativeButton(R.string.common_cancel, this)
+                .setMessage("This app need READ CONTACT permission to operate functionally")
+                .setTitle("Request permission")
+                .create().show();
+    }
+
+    //Launch contact fragment with state depend on permission is granted or not
+    private void onPermissionsGranted(boolean isGranted){
+        getSupportFragmentManager().beginTransaction().replace(R.id.content, ContactListFragment.newInstance(isGranted)).commitAllowingStateLoss();
+    }
+
+    @Override
+    public void onClick(DialogInterface dialogInterface, int i) {
+        if (i == AlertDialog.BUTTON_POSITIVE) {
+            ActivityCompat.requestPermissions(MainActivity.this, requestedPermissions, REQUEST_PERMISSIONS);
+        }else if(i == AlertDialog.BUTTON_NEGATIVE){
+            onPermissionsGranted(false);
+        }
+    }
+
+    @Override
+    public void onFragmentInteraction(int id) {
+        if(id == R.id.btnGrantPermission){
+            changePermissionSetting();
+        }
+    }
 }
+

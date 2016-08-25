@@ -1,0 +1,44 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/standard_padding"
+
+    android:id="@+id/contact_layout"
+    android:orientation="vertical"
+    tools:context="com.phongnguyen.cloudsyncdemo.ui.ContactListFragment">
+
+    <ListView android:id="@+id/contact_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <!-- TODO: Update blank fragment layout -->
+    <LinearLayout
+        android:id="@+id/empty_layout"
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_height="match_parent">
+        <TextView
+            android:layout_width="match_parent"
+            style="@style/TextAppearance.AppCompat.Title"
+            android:textAlignment="center"
+            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:text="Grant me the permission, and I'll handle everything else !" />
+        <Button
+            android:id="@+id/btnGrantPermission"
+            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:text="Grant the mighty permission"
+            android:padding="4dp"
+            android:layout_margin="4dp"
+            style="@android:style/Widget.DeviceDefault.Button"
+            android:background="@color/colorAccent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+
+</LinearLayout>
