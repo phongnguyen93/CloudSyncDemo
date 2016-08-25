@@ -57,7 +57,7 @@
                 android:textColor="@color/textColor"
                 android:textSize="@dimen/two_line_primary_text_size" />
 
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="0dp"
@@ -66,31 +66,25 @@
 
                 <TextView
                     android:id="@+id/size"
+                    android:layout_alignParentStart="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Size MB"
                     android:textColor="@color/list_item_lastmod_and_filesize_text"
                     android:textSize="@dimen/two_line_secondary_text_size"/>
 
-                <TextView
-                    android:id="@+id/file_separator"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:text=", "
-                    android:textColor="@color/list_item_lastmod_and_filesize_text"
-                    android:textSize="@dimen/two_line_secondary_text_size"/>
 
                 <TextView
                     android:id="@+id/last_mod"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="right"
+                    android:layout_alignParentEnd="true"
+                    android:gravity="bottom"
                     android:text="Mod Date"
                     android:textColor="@color/list_item_lastmod_and_filesize_text"
                     android:textSize="@dimen/two_line_secondary_text_size"/>
 
-            </LinearLayout>
+            </RelativeLayout>
 
         </LinearLayout>
 

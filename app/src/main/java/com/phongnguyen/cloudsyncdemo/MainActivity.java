@@ -107,7 +107,6 @@ public class MainActivity extends DropboxActivity
         navigationView.setNavigationItemSelectedListener(this);
         getFolder(DEFAULT_DEST);
 
-
     }
 
 
@@ -155,7 +154,9 @@ public class MainActivity extends DropboxActivity
                     Log.d("file_count_get",myFolder.getTotalFiles()+"");
                     Log.d("file_count_actual",myFolder.getFileList().size()+"");
                     myFolder.setName(name);
-                    getSupportFragmentManager().beginTransaction().add(R.id.content, MyFilesFragment.newInstance(myFolder)).commit();
+                    if(myFolder!=null)
+                        getSupportFragmentManager().beginTransaction()
+                                .add(R.id.content, MyFilesFragment.newInstance(myFolder)).commit();
                 }
             }
 

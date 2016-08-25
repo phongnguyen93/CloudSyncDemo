@@ -7,6 +7,7 @@ import android.util.Log;
 import com.phongnguyen.cloudsyncdemo.models.MyFile;
 import com.phongnguyen.cloudsyncdemo.models.MyFolder;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -43,12 +44,13 @@ public class CommonUtils {
 
     public static String makeDateText(String lastModified) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd/MM/yyyy", Locale.ROOT);
-            Date date = sdf.parse(lastModified);
+            DateFormat dateFormat = new SimpleDateFormat("HH:mm dd/MM/yyyy", Locale.ENGLISH);
+            DateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH);
+            Date date = dateFormat2.parse(lastModified);
             if (System.currentTimeMillis() == date.getTime()) {
                 return BASE_TEXT_DATE + "Today";
             } else
-                return date.toString();
+                return BASE_TEXT_DATE + dateFormat.format(date);
         } catch (ParseException ex) {
             Log.e(TAG, ex.getMessage());
             return "";

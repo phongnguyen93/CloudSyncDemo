@@ -2,26 +2,22 @@ package com.phongnguyen.cloudsyncdemo.ui;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.dropbox.core.v1.DbxEntry;
-import com.phongnguyen.cloudsyncdemo.MainActivity;
+import com.getbase.floatingactionbutton.FloatingActionButton;
+import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.phongnguyen.cloudsyncdemo.R;
 import com.phongnguyen.cloudsyncdemo.dropbox.PicassoClient;
-import com.phongnguyen.cloudsyncdemo.models.MyFile;
 import com.phongnguyen.cloudsyncdemo.models.MyFolder;
 import com.phongnguyen.cloudsyncdemo.ui.adapter.FileDisplayAdapter;
 import com.phongnguyen.cloudsyncdemo.util.CommonUtils;
-
-import java.util.ArrayList;
 
 
 /**
@@ -39,6 +35,9 @@ public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Call
     private MyFolder myFolder;
     private FileDisplayAdapter adapter;
     private TextView tvSummary;
+    private FloatingActionButton mFabMkdir,mFabUploadFromApp;
+    private FloatingActionsMenu mFabMain;
+
     public MyFilesFragment() {
         // Required empty public constructor
     }
@@ -65,13 +64,13 @@ public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Call
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_my_files, container, false);
-        FloatingActionButton fab = (FloatingActionButton) v.findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mListener.onFragmentInteraction();
-            }
-        });
+
+        mFabMain = (FloatingActionsMenu) v.findViewById(R.id.fab);
+        mFabMkdir = (FloatingActionButton) v.findViewById(R.id.fab_mkdir);
+        mFabUploadFromApp = (FloatingActionButton) v.findViewById(R.id.fab_upload_from_app);
+        registerFabMkDirListeners();
+        registerFabUploadListeners();
+
         RecyclerView recyclerView = (RecyclerView)v.findViewById(R.id.rvFileDisplay);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         adapter = new FileDisplayAdapter(PicassoClient.getPicasso(),this);
@@ -90,7 +89,30 @@ public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Call
         return  v;
     }
 
+    private void registerFabUploadListeners() {
+        mFabUploadFromApp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onFragmentInteraction();
+                mFabMain.collapse();
+            }
+        });
 
+    }
+
+    /**
+     * registers {@link android.view.View.OnClickListener} and {@link android.view.View.OnLongClickListener}
+     * on the 'Create Dir' mini FAB for the linked action and {@link Toast} showing the underlying action.
+     */
+    private void registerFabMkDirListeners() {
+        mFabMkdir.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFabMain.collapse();
+            }
+        });
+
+    }
 
 
     @Override
