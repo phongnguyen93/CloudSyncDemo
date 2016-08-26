@@ -24,7 +24,7 @@ public class CommonUtils {
     public static final String TAG = CommonUtils.class.getSimpleName();
 
     public static final String BASE_TEXT_SIZE = "Size: ";
-    public static final String BASE_TEXT_DATE = "Last modified: ";
+    public static final String BASE_TEXT_DATE = "Modified: ";
 
     public static String getFolderNameFromPath(String folderPath){
          String[] split = folderPath.split("/");
@@ -46,7 +46,7 @@ public class CommonUtils {
 
     public static String makeDateText(String lastModified) {
         try {
-            DateFormat dateFormat = new SimpleDateFormat("HH:mm dd/MM/yyyy", Locale.ENGLISH);
+            DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH);
             DateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH);
             Date date = dateFormat2.parse(lastModified);
             if (System.currentTimeMillis() == date.getTime()) {

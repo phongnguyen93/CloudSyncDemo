@@ -135,15 +135,13 @@ public class MainActivity extends DropboxActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == PICKFILE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 try {
                     File file = UriHelpers.getFileForUri(this, data.getData());
                     if (file != null)
-                        requestSession(file.getName(), DEFAULT_DEST, file.length(), DEFAULT_TOTAL_CHUNK);
-                    if (mCurrentSession != null)
-                        uploadFile(createParamsMap(mCurrentSession, getFileMetaData(file)),file);
+                        requestSession(file, DEFAULT_DEST, DEFAULT_TOTAL_CHUNK);
+
                 }catch (Exception ex)
                 {
                     Log.e("error",ex.getMessage());
@@ -240,13 +238,16 @@ public class MainActivity extends DropboxActivity
         return params;
     }
 
-    private void requestSession(String fileName,String fileDest,long fileSize,int totalChunk) {
-        Call<Session> request = mApiInterface.requestUploadSession(DEFAULT_TOKEN,fileName,fileDest,fileSize,totalChunk);
+    private void requestSession(File file,String fileDest,int totalChunk) {
+        final File mFile = file;
+        Call<Session> request = mApiInterface.requestUploadSession(DEFAULT_TOKEN,mFile.getName(),fileDest,file.length(),totalChunk);
         request.enqueue(new Callback<Session>() {
             @Override
             public void onResponse(Call<Session> call, Response<Session> response) {
                 if (response.isSuccessful()) {
                     mCurrentSession = response.body();
+                    if (mCurrentSession != null)
+                        uploadFile(createParamsMap(mCurrentSession, getFileMetaData(mFile)),mFile);
                 } else {
                     Log.i("ERROR", String.valueOf(response.code()));
                 }
