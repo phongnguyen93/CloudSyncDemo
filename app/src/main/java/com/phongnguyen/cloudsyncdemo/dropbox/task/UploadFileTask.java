@@ -8,7 +8,7 @@ import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.files.WriteMode;
-import com.phongnguyen.cloudsyncdemo.dropbox.UriHelpers;
+import com.phongnguyen.cloudsyncdemo.util.UriHelpers;
 
 import java.io.File;
 import java.io.FileInputStream;

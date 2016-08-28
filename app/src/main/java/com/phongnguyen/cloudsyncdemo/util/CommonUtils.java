@@ -25,6 +25,7 @@ public class CommonUtils {
 
     public static final String BASE_TEXT_SIZE = "Size: ";
     public static final String BASE_TEXT_DATE = "Modified: ";
+    public static final int CHUNK_SIZE =  1*1024 * 1024;// 1MB
 
     public static String getFolderNameFromPath(String folderPath){
          String[] split = folderPath.split("/");
@@ -33,6 +34,7 @@ public class CommonUtils {
         else
             return "root";
     }
+
 
 
     public static String makeFileName(MyFile item) {
@@ -104,5 +106,9 @@ public class CommonUtils {
      */
     public static boolean hasICS() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH;
+    }
+
+    public static int calculateChunks(long length) {
+        return (int)length/CHUNK_SIZE;
     }
 }

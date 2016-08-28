@@ -1,4 +1,4 @@
-package com.phongnguyen.cloudsyncdemo.dropbox;
+package com.phongnguyen.cloudsyncdemo.util;
 
 import android.content.ContentUris;
 import android.content.Context;

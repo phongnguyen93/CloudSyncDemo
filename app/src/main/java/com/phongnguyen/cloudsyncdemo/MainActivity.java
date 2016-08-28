@@ -1,7 +1,6 @@
 package com.phongnguyen.cloudsyncdemo;
 
 import android.Manifest;
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,7 +10,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -22,17 +20,15 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.SparseIntArray;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dropbox.core.v2.users.FullAccount;
 import com.phongnguyen.cloudsyncdemo.api.interfaces.ApiInterface;
 import com.phongnguyen.cloudsyncdemo.dropbox.DropboxClientFactory;
-import com.phongnguyen.cloudsyncdemo.dropbox.UriHelpers;
+import com.phongnguyen.cloudsyncdemo.util.IOUtils;
+import com.phongnguyen.cloudsyncdemo.util.UriHelpers;
 import com.phongnguyen.cloudsyncdemo.dropbox.task.GetCurrentAccountTask;
 import com.phongnguyen.cloudsyncdemo.models.ApiResponse;
 import com.phongnguyen.cloudsyncdemo.models.MetaData;
@@ -46,13 +42,12 @@ import com.phongnguyen.cloudsyncdemo.ui.MyFilesFragment;
 import com.phongnguyen.cloudsyncdemo.ui.dialog.CreateFolderDialogFragment;
 import com.phongnguyen.cloudsyncdemo.ui.dialog.LoadingDialog;
 import com.phongnguyen.cloudsyncdemo.util.CommonUtils;
-import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.Permission;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -149,9 +144,10 @@ public class MainActivity extends DropboxActivity
         if (requestCode == PICKFILE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 try {
+
                     File file = UriHelpers.getFileForUri(this, data.getData());
                     if (file != null)
-                        requestSession(file, DEFAULT_DEST, DEFAULT_TOTAL_CHUNK);
+                        requestSession(file, DEFAULT_DEST);
 
                 }catch (Exception ex)
                 {
@@ -163,14 +159,17 @@ public class MainActivity extends DropboxActivity
     }
 
 
-    private MetaData getFileMetaData(File file){
+
+
+    private MetaData getFileMetaData(File file,int chunkCount, int totalSize,int totalChunk){
+        String name = file.getName();
         mMetaData = new MetaData();
-        mMetaData.setName(file.getName());
+        mMetaData.setName(file.getName().substring(0,name.length()-6));
         mMetaData.setDest(DEFAULT_DEST); //default destination on server: /
-        mMetaData.setOffset(0); //default offset
-        mMetaData.setChunk(0); //current chunk ( default = 0 if file size < 8Mb
-        mMetaData.setTotalSize(file.length());
-        mMetaData.setTotalChunk(DEFAULT_TOTAL_CHUNK); //default total chunk = 1 if file size < 8Mb
+        mMetaData.setOffset((int)file.length()); //default offset
+        mMetaData.setChunk(chunkCount); //current chunk ( default = 0 if file size < 8Mb
+        mMetaData.setTotalSize(totalSize);
+        mMetaData.setTotalChunk(totalChunk); //default total chunk = 1 if file size < 8Mb
         return  mMetaData;
     }
 
@@ -202,7 +201,7 @@ public class MainActivity extends DropboxActivity
     private void uploadFile(Map<String,RequestBody> params,File file) {
         MultipartBody.Part body = MultipartBody.Part.createFormData(UPLOAD_PARAM_FILE,file.getName()
                 ,RequestBody.create(MediaType.parse(CONTENT_TYPE),file));
-        Call<ApiResponse> upload = mApiInterface.uploadFile(DEFAULT_TOKEN,params,body);
+        Call<ApiResponse> upload = mApiInterface.uploadFile(DEFAULT_TOKEN,   params,body);
         upload.enqueue(new Callback<ApiResponse>() {
             @Override
             public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
@@ -249,16 +248,24 @@ public class MainActivity extends DropboxActivity
         return params;
     }
 
-    private void requestSession(File file,String fileDest,int totalChunk) {
-        final File mFile = file;
-        Call<Session> request = mApiInterface.requestUploadSession(DEFAULT_TOKEN,mFile.getName(),fileDest,file.length(),totalChunk);
+    private void requestSession(final File file, String fileDest) {
+
+        final List<File> files = IOUtils.splitFile(file);
+        final int chunkCount = CommonUtils.calculateChunks(file.length());
+        final int totalSize = (int)file.length();
+        Call<Session> request = mApiInterface.requestUploadSession(DEFAULT_TOKEN,file.getName(),fileDest,file.length()
+                ,chunkCount);
         request.enqueue(new Callback<Session>() {
             @Override
             public void onResponse(Call<Session> call, Response<Session> response) {
                 if (response.isSuccessful()) {
                     mCurrentSession = response.body();
                     if (mCurrentSession != null)
-                        uploadFile(createParamsMap(mCurrentSession, getFileMetaData(mFile)),mFile);
+                        for(int i = 0; i< files.size();i++){
+                            MetaData metaData = getFileMetaData(files.get(i),i,totalSize,chunkCount);
+                            uploadFile(createParamsMap(mCurrentSession, metaData),files.get(i));
+                        }
+
                 } else {
                     Log.i("ERROR", String.valueOf(response.code()));
                 }

@@ -42,7 +42,7 @@ public class IOUtils{
                 while ((tmp = bis.read(buffer)) > 0) {
                     //write each chunk of data into separate file with different number in name
                     File newFile = new File(file.getParent(), name + "."
-                            + String.format("%03d", partCounter++));
+                            + String.format("%05d", partCounter++));
                     try (FileOutputStream out = new FileOutputStream(newFile)) {
                         out.write(buffer, 0, tmp);//tmp is chunk size
                     }
@@ -53,6 +53,10 @@ public class IOUtils{
             Log.e(TAG,ex.getMessage());
         }
         return files;
+    }
+
+    private void saveFileInternal(List<File> files){
+
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
