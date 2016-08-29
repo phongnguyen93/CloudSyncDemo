@@ -1,6 +1,7 @@
 package com.phongnguyen.cloudsyncdemo;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -25,6 +26,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.dropbox.core.v2.users.FullAccount;
+import com.google.common.io.Files;
 import com.phongnguyen.cloudsyncdemo.api.interfaces.ApiInterface;
 import com.phongnguyen.cloudsyncdemo.dropbox.DropboxClientFactory;
 import com.phongnguyen.cloudsyncdemo.util.IOUtils;
@@ -82,9 +84,10 @@ public class MainActivity extends DropboxActivity
     public static final String UPLOAD_PARAM_CHUNK = "chunk";
     public static final String UPLOAD_PARAM_TOTAL_CHUNK = "chunks";
 
-    //request read contact constant
+    //request permission
     private static final int REQUEST_PERMISSIONS = 20;
-    public static final String[] requestedPermissions = {Manifest.permission.READ_CONTACTS};
+    public static final String[] requestReadContactPer = {Manifest.permission.READ_CONTACTS};
+    public static final String[] requestReadExStoragePer = {Manifest.permission.READ_EXTERNAL_STORAGE};
 
     //folder action constant
     public static final String ACTION_NEW = "new";
@@ -144,7 +147,7 @@ public class MainActivity extends DropboxActivity
         if (requestCode == PICKFILE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 try {
-
+                    showProgressDialog("Uploading...");
                     File file = UriHelpers.getFileForUri(this, data.getData());
                     if (file != null)
                         requestSession(file, DEFAULT_DEST);
@@ -161,12 +164,12 @@ public class MainActivity extends DropboxActivity
 
 
 
-    private MetaData getFileMetaData(File file,int chunkCount, int totalSize,int totalChunk){
+    private MetaData getFileMetaData(File file,int chunkCount, int totalSize,int totalChunk, int offset){
         String name = file.getName();
         mMetaData = new MetaData();
-        mMetaData.setName(file.getName().substring(0,name.length()-6));
+        mMetaData.setName(name);
         mMetaData.setDest(DEFAULT_DEST); //default destination on server: /
-        mMetaData.setOffset((int)file.length()); //default offset
+        mMetaData.setOffset(offset); //default offset
         mMetaData.setChunk(chunkCount); //current chunk ( default = 0 if file size < 8Mb
         mMetaData.setTotalSize(totalSize);
         mMetaData.setTotalChunk(totalChunk); //default total chunk = 1 if file size < 8Mb
@@ -205,6 +208,7 @@ public class MainActivity extends DropboxActivity
         upload.enqueue(new Callback<ApiResponse>() {
             @Override
             public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                dismissLoadingDialog();
                 if (response.isSuccessful()) {
                     Toast.makeText(getApplicationContext(),response.body().getMessage()+" - Uploaded",Toast.LENGTH_SHORT).show();
 
@@ -260,12 +264,14 @@ public class MainActivity extends DropboxActivity
             public void onResponse(Call<Session> call, Response<Session> response) {
                 if (response.isSuccessful()) {
                     mCurrentSession = response.body();
-                    if (mCurrentSession != null)
-                        for(int i = 0; i< files.size();i++){
-                            MetaData metaData = getFileMetaData(files.get(i),i,totalSize,chunkCount);
-                            uploadFile(createParamsMap(mCurrentSession, metaData),files.get(i));
+                    if (mCurrentSession != null) {
+                        int offset = 0;
+                        for (int i = 0; i < files.size(); i++) {
+                            MetaData metaData = getFileMetaData(files.get(i), i, totalSize, chunkCount,offset);
+                            uploadFile(createParamsMap(mCurrentSession, metaData), files.get(i));
+                            offset += files.get(i).length();
                         }
-
+                    }
                 } else {
                     Log.i("ERROR", String.valueOf(response.code()));
                 }
@@ -329,7 +335,7 @@ public class MainActivity extends DropboxActivity
                 else
                     onPermissionsGranted(false);
             } else
-                requestAppPermissions(requestedPermissions, R.string.runtime_permissions_txt, REQUEST_PERMISSIONS);
+                requestAppPermissions(requestReadContactPer, R.string.runtime_permissions_txt, REQUEST_PERMISSIONS);
 
 
         }
@@ -382,10 +388,25 @@ public class MainActivity extends DropboxActivity
                 showCreateFolderDialog();
                 break;
             case "uploadFile":
-                launchFilePicker();
+                if (hasCheckedPermission) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+                        launchFilePicker();
+                    else
+                        showInfoDialog();
+                } else
+                    requestAppPermissions(requestReadExStoragePer, R.string.runtime_permissions_txt, REQUEST_PERMISSIONS);
+
                 break;
         }
 
+    }
+
+    private void showInfoDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this );
+        builder.setTitle("Notice")
+                .setNeutralButton("OK",this)
+                .setMessage(R.string.runtime_permissions_txt)
+                .create().show();
     }
 
     private void showCreateFolderDialog() {
@@ -435,7 +456,11 @@ public class MainActivity extends DropboxActivity
         }
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
             if (shouldShowRequestPermissionRationale) {
-                showRequestDiaglog();
+                if(requestedPermissions[0] == Manifest.permission.READ_CONTACTS)
+                    showRequestDiaglog("READ CONTACT");
+                else
+                    showRequestDiaglog("READ EXTERNAL STORAGE");
+
             } else {
                 onPermissionsGranted(false);
             }
@@ -451,11 +476,11 @@ public class MainActivity extends DropboxActivity
     }
 
     //BUild and show dialog to explain why this app need permission
-    private void showRequestDiaglog() {
+    private void showRequestDiaglog(String permission) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setPositiveButton(R.string.common_ok, this)
                 .setNegativeButton(R.string.common_cancel, this)
-                .setMessage("This app need READ CONTACT permission to operate functionally")
+                .setMessage("This app need "+permission+" permission to operate functionally")
                 .setTitle("Request permission")
                 .create().show();
     }
@@ -468,7 +493,7 @@ public class MainActivity extends DropboxActivity
     @Override
     public void onClick(DialogInterface dialogInterface, int i) {
         if (i == AlertDialog.BUTTON_POSITIVE) {
-            ActivityCompat.requestPermissions(MainActivity.this, requestedPermissions, REQUEST_PERMISSIONS);
+            ActivityCompat.requestPermissions(MainActivity.this, requestReadContactPer, REQUEST_PERMISSIONS);
         }else if(i == AlertDialog.BUTTON_NEGATIVE){
             onPermissionsGranted(false);
         }

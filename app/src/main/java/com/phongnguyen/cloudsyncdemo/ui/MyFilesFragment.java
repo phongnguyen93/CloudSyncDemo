@@ -95,7 +95,7 @@ public class MyFilesFragment extends Fragment implements FileDisplayAdapter.Call
         mFabUploadFromApp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onFragmentInteraction(FAB_ACTION_CREATE_FOLDER);
+                mListener.onFragmentInteraction(FAB_ACTION_UPLOAD);
                 mFabMain.collapse();
             }
         });
